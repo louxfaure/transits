@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+{% load bootstrap4 %}
+{% block title %}Suivi des transits{% endblock %}
+{% block content %}
+<div class="container-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+        <h1 class="display-4">Suivi des transits pour la navette</h1>
+        <p class="lead">
+            Liste des documents à prendre en charge pour la navette
+        </p>
+</div>
+<body>
+    <div class="container mt-5">
+        
+    
+        <!-- Onglets pour les bibliothèques de retrait -->
+        <ul class="nav nav-pills" id="myTab" role="tablist">
+            {% for entry in data %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if forloop.first %}active{% endif %} btn-lg" id="tab-{{ forloop.counter }}" data-bs-toggle="tab" data-bs-target="#tab-content-{{ forloop.counter }}" type="button" role="tab" aria-controls="tab-content-{{ forloop.counter }}" aria-selected="true">
+                    {{ entry.bibliotheque_retrait }} <span class="badge badge-pill badge-light">{{ entry.nombre_doc_a_prendre_en_charge }}</span>
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+    
+        <div class="tab-content mt-4" id="myTabContent">
+            <!-- Contenu des onglets pour les bibliothèques de destination -->
+            {% for entry in data %}
+            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="tab-content-{{ forloop.counter }}" role="tabpanel" aria-labelledby="tab-{{ forloop.counter }}">
+                <h2 class="mb-4">Bibliothèque de retrait : {{ entry.bibliotheque_retrait }}</h2>
+                
+                <!-- Onglets pour les bibliothèques de destination -->
+                <ul class="nav nav-pills mb-3" id="pills-tab-{{ forloop.counter }}" role="tablist">
+                    {% for destination in entry.bibliotheque_destination %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if forloop.first %}active{% endif %}" id="pills-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" data-bs-toggle="pill" data-bs-target="#pills-content-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" type="button" role="tab" aria-controls="pills-content-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" aria-selected="true">
+                            {{ destination.nom }} <span class="badge badge-pill badge-light">{{ destination.items|length }}</span>
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+    
+                <!-- Contenu des onglets pour les items -->
+                <div class="tab-content" id="pills-tabContent-{{ forloop.counter }}">
+                    {% for destination in entry.bibliotheque_destination %}
+                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="pills-content-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" role="tabpanel" aria-labelledby="pills-{{ forloop.counter }}-{{ forloop.parentloop.counter }}">
+                        <h3 class="mb-4">Bibliothèque de destination : {{ destination.nom }}</h3>
+                        <div class="row">
+                            <!-- Cards pour les items -->
+                            {% for item in destination.items %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 {{ item.type_de_demande }}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ item.titre }}</h5>
+                                        <p class="card-text"><strong>Code barre :</strong> {{ item.cb }}</p>
+                                        <span class="badge badge-pill badge-light position-absolute top-0 end-0">{{ item.type_de_demande }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS (facultatif) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+<div class="py-3">
+    <a href="{{ file_url }}"
+        class="btn btn-primary btn-lg {% if somevar is False %}disabled{% endif %}" role="button" {% if somevar is False %}aria-disabled="true"{% endif %}>Télécharger le fichier pour l'alimentation du casier à la BU Marne</a>
+</div>
+{% endblock %}

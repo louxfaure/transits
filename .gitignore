@@ -1,0 +1,9 @@
+db.sqlite3
+**/__pycache__/
+*.pyc
+settings.py
+wsgi.py
+*.sqlite3
+db.json
+migrations/
+.vscode
