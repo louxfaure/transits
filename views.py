@@ -23,8 +23,7 @@ def transits(request):
     api_key = settings.ALMA_API_KEY['CASIERS_UB']
     # Identifiant du jeux de résultat listant les documents en transi vers Marne
     set_id = Parametres.objects.get( clef_parametre = 'set_id')
-    # set_id = "7372627370004672" #Prod
-    # set_id = "7423938900004672" #Testr
+
     ######################################################
     # Récupéraion de la liste des exemplaires en transit #
     ######################################################
