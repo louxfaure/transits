@@ -3,6 +3,8 @@
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from ratelimit import limits, sleep_and_retry
+
 import logging
 import xml.etree.ElementTree as ET
 from math import *
@@ -74,7 +76,11 @@ class Alma_API(object):
                 error_message = content['errorList']['error'][0]['errorMessage']
                 error_code = content['errorList']['error'][0]['errorCode']
         return error_code, error_message
-    
+    from ratelimit import limits, sleep_and_retry
+
+    # Limites : 50 requêtes par seconde (https://developers.exlibrisgroup.com/alma/apis/#threshold)
+    @sleep_and_retry
+    @limits(calls=50, period=1)
     def request(self, httpmethod, url, params={}, data=None,
                 accept='json', content_type=None, nb_tries=0, in_url=None):
         #20190905 retry request 3 time s in case of requests.exceptions.ConnectionError

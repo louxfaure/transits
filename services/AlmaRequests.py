@@ -52,7 +52,6 @@ class AlmaRequests(object):
     def repere_transit_pour_marne(self):
         for demande in self.record['user_request'] :
             if 'pickup_location_library' not in demande :
-                self.mes_logs.error(demande)
                 continue
             if 'task_name' not in demande :
                 continue

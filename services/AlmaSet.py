@@ -72,12 +72,10 @@ class AlmaSet(object):
         - récupère la liste des membres
         - pour chaque document récupère des informations détaillées
         """
-        # On évalue le nombre d'appels nécessaires pour obtenir la liste
         nb_appels = math.ceil(self.get_nombre_de_membres() / 100)
         all_documents = []
 
-        for i in range(0, nb_appels):
-            offset = i * 100
+        def fetch_members(offset):
             status, result = self.get_set_members(
                 set_id=self.set_id, limit=100, offset=offset
             )
@@ -85,34 +83,37 @@ class AlmaSet(object):
             if status == "Error":
                 self.est_erreur = True
                 self.message_erreur = result
+                return []
             else:
-                all_documents.extend(result["member"])
+                return result["member"]
 
-        # for doc in all_documents :
-        #     self.mes_logs.info("Récupération des infos pour le mmsid {}".format(doc["id"]))
-        #     pattern = r"bibs/(\d+)/holdings/(\d+)/items/(\d+)"
-        #     match = re.search(pattern, doc["link"])
-        #     mms_id = match.group(1)
-        #     holding_id = match.group(2)
-        #     item_id = match.group(3)
-        #     demandes = AlmaRequests.AlmaRequests(mms_id=mms_id,holding_id=holding_id,item_id=item_id,apikey=self.apikey,service=self.service)
-        #     if demandes.nb_de_demandes() > 0 :
-        #          self.liste_transit_pour_marne.append(demandes.repere_transit_pour_marne())
+        # Parallelize the fetching of members
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(fetch_members, i * 100) for i in range(nb_appels)]
 
-
+            for future in as_completed(futures):
+                try:
+                    result = future.result()
+                    all_documents.extend(result)
+                except Exception as e:
+                    self.mes_logs.error(f"Erreur lors de la récupération des membres: {e}")
 
         def fetch_details(doc):
-            self.mes_logs.info("Récupération des infos pour le mmsid {}".format(doc["id"]))
-            pattern = r"bibs/(\d+)/holdings/(\d+)/items/(\d+)"
-            match = re.search(pattern, doc["link"])
-            mms_id = match.group(1)
-            holding_id = match.group(2)
-            item_id = match.group(3)
-            demandes = AlmaRequests.AlmaRequests(mms_id=mms_id,holding_id=holding_id,item_id=item_id,apikey=self.apikey,service=self.service)
-            if demandes.nb_de_demandes() > 0 :
-                return demandes.repere_transit_pour_marne()
+            try:
+                self.mes_logs.info("Récupération des infos pour le mmsid {}".format(doc["id"]))
+                pattern = r"bibs/(\d+)/holdings/(\d+)/items/(\d+)"
+                match = re.search(pattern, doc["link"])
+                mms_id = match.group(1)
+                holding_id = match.group(2)
+                item_id = match.group(3)
+                demandes = AlmaRequests.AlmaRequests(mms_id=mms_id,holding_id=holding_id,item_id=item_id,apikey=self.apikey,service=self.service)
+                if demandes.nb_de_demandes() > 0:
+                    return demandes.repere_transit_pour_marne()
+            except Exception as e:
+                self.mes_logs.error(f"Erreur lors de la récupération des détails du document {doc['id']}: {e}")
+                return None
 
-
+        # Parallelize the fetching of document details
         with ThreadPoolExecutor(max_workers=15) as executor:
             futures = {executor.submit(fetch_details, doc): doc for doc in all_documents}
 

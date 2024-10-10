@@ -95,7 +95,7 @@ def transits(request):
 
         # Générer le fichier CSV et le sauvegarder
         with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile, delimiter='\t')
+            writer = csv.writer(csvfile, delimiter='|')
             writer.writerow(["N° carte", "Code barres", "Adhérent", "Titre"])
             for demande in datas:
                 if demande['Marne']:
