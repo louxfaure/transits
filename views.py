@@ -17,9 +17,12 @@ import tempfile, os
 
 #Initialisation des logs
 mes_logs = logging.getLogger(__name__)
-
 @login_required
 def transits(request):
+    return render(request, 'transits.html')  # Rendu du gabarit HTML sans données
+
+@login_required
+def transits_data(request):
     api_key = settings.ALMA_API_KEY['CASIERS_UB']
     # Identifiant du jeux de résultat listant les documents en transi vers Marne
     set_id = Parametres.objects.get( clef_parametre = 'set_id')
@@ -104,5 +107,7 @@ def transits(request):
             mes_logs.info(f"Fichier {fichier_csv} créé avec succès.")
         # Crée un lien pour télécharger le fichier
         file_url = os.path.join(settings.MEDIA_URL, filename)
+   
 
-    return render(request, "transits/transits.html", {'data': result, 'file_url': file_url, 'docs_pour_Marne':docs_pour_Marne })
+    return JsonResponse({'data': result, 'file_url': file_url, 'docs_pour_Marne':docs_pour_Marne }, safe=False)
+    # return render(request, "transits/transits.html", {'data': result, 'file_url': file_url, 'docs_pour_Marne':docs_pour_Marne })
