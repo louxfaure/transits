@@ -21,6 +21,8 @@ mes_logs = logging.getLogger(__name__)
 def transits(request):
     return render(request, 'transits.html')  # Rendu du gabarit HTML sans données
 
+    
+
 @login_required
 def transits_data(request):
     api_key = settings.ALMA_API_KEY['CASIERS_UB']
@@ -30,7 +32,6 @@ def transits_data(request):
     ######################################################
     # Récupéraion de la liste des exemplaires en transit #
     ######################################################
-    fichier_csv = ""
     mon_set = AlmaSet.AlmaSet(apikey=api_key,service=__name__,set_id=set_id)
     datas = mon_set.liste_transit_pour_marne
 
@@ -43,7 +44,7 @@ def transits_data(request):
     # On remplit la structure et on comptabilise le nombre d'items
     gestion_item_count = defaultdict(int)
 
-    # Varaible de contrôle pour voir s'il y a des doc pour les casiers Marne
+    # Variable de contrôle pour voir s'il y a des doc pour les casiers Marne
     docs_pour_Marne = False
 
     # On remplit la structure
@@ -104,10 +105,44 @@ def transits_data(request):
                 if demande['Marne']:
                     writer.writerow([demande['N° carte'],demande['cb'],demande['Adhérent'],demande['titre']])
 
-            mes_logs.info(f"Fichier {fichier_csv} créé avec succès.")
+            mes_logs.info(f"Fichier {file_path} créé avec succès.")
         # Crée un lien pour télécharger le fichier
         file_url = os.path.join(settings.MEDIA_URL, filename)
    
 
     return JsonResponse({'data': result, 'file_url': file_url, 'docs_pour_Marne':docs_pour_Marne }, safe=False)
     # return render(request, "transits/transits.html", {'data': result, 'file_url': file_url, 'docs_pour_Marne':docs_pour_Marne })
+
+def transits_csv(request):
+    mes_logs.debug("CSV CSV CSC")
+    api_key = settings.ALMA_API_KEY['CASIERS_UB']
+    # Identifiant du jeux de résultat listant les documents en transi vers Marne
+    set_id = Parametres.objects.get( clef_parametre = 'set_id')
+
+    ######################################################
+    # Récupéraion de la liste des exemplaires en transit #
+    ######################################################
+    mon_set = AlmaSet.AlmaSet(apikey=api_key,service=__name__,set_id=set_id)
+    datas = mon_set.liste_transit_pour_marne
+
+    #####################################################
+    # Création du fichier CSV pour chargement du casier #
+    #####################################################
+    # Nom du fichier
+    filename = "export.csv"
+    file_path = os.path.join(settings.MEDIA_ROOT, filename)
+
+    # Générer le fichier CSV et le sauvegarder
+    with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile, delimiter='|')
+        writer.writerow(["N° carte", "Code barres", "Adhérent", "Titre"])
+        for demande in datas:
+            if demande['Marne']:
+                writer.writerow([demande['N° carte'],demande['cb'],demande['Adhérent'],demande['titre']])
+
+        mes_logs.info(f"Fichier {file_path} créé avec succès.")
+    with open(file_path) as myfile:
+        response = HttpResponse(myfile, content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+        return response
+
